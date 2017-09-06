@@ -1,0 +1,69 @@
+---
+title: "Big data project"
+author: "Moustapha Gaoh"
+date: "March 30, 2016"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+############ Glm model
+
+## fitting the control parameter
+ctrl <- trainControl(method = "cv", number = 2, classProbs = TRUE)
+glm.clas=function(xd,yd,ctrl){
+  registerDoMC(cores = 5)
+  model <- train(y=yd, x= xd, method = "glm",trControl = ctrl, family="binomial")
+  return (model)
+}
+
+
+########## the first case machine learning approches ####
+
+
+#### Only the first faillure prediction
+ytr=ytrain2
+ytest=ytest2
+xtr=xtrain
+xte=xtest
+# fitting the model glm
+model=glm.clas(xtr, ytr,ctrl)
+# seing the performance choosing the best threshold
+fittingProba<-predict(model, xtr ,type = "prob")
+optimalthr=opthr(fittingProba = fittingProba, ytr)
+# predicting
+
+predProba<-predict(model, xte, type = "prob")
+pred = as.factor(ifelse(predProba[1] > optimalthr,"Faillure","Normal"))
+sensibility = mean(pred[ytest == "Faillure"] == "Faillure")
+specificity = mean(pred[ytest == "Normal"] == "Normal")
+table(pred,ytest)
+auc=roc(as.numeric(ytest), as.numeric(pred))
+plot(auc, ylim=c(0,1), print.thres=TRUE, main=paste('AUC:',round(auc$auc[[1]],2)))
+mean(pred==ytest)
+sensibility
+specificity
+
+## the variables importance
+varimp <- varImp(model, scale = FALSE)
+plot(varimp, top=20)
+descnum(varimp = varimp)
+ggplotly()
+
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+
+```
+
